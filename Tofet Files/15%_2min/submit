@@ -1,0 +1,15 @@
+#!/bin/sh
+###################################################
+#PBS -N mc_run1
+#PBS -l nodes=1:ppn=1 -l walltime=15:00 -l mem=1000MB
+#PBS -q joe-test
+#PBS -j oe
+###################################################
+
+WORKDIR=${PBS_O_WORKDIR}
+cd ${WORKDIR}
+echo "Nodes chosen are:"
+cat $PBS_NODEFILE
+NCPUS=`wc -l < $PBS_NODEFILE`
+
+./tft P3HTtof.sim '15%_2min_100 100_50.xyz' '15%_2min_100 100_50.edge' > '15%_2min_100 100_50.out'
