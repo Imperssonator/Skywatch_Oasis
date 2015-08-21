@@ -30,6 +30,7 @@ IM = rgb2gray(IMG2);
 
 [m,n] = size(IM);
 ImArea = m*n;
+% ImArea = imdim^2;
 
 %% Fiber Confidence parameters
 % Change min area to exclude small regions from being considered "fibers"
@@ -45,7 +46,7 @@ maxarea = ImArea*5E-3;
 % You probably don't want to run from 0 to 100%, so use these bounds to
 % contain the algorithm:
 
-Minthresh = 40;
+Minthresh = 30;
 Maxthresh = 60;
 
 %% Rest of Algo
