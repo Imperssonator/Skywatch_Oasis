@@ -5,6 +5,8 @@ function SP = YBSeg(File,Dim)
 %   File is the file path from current active dir
 %   Dim is the image dimension in nm
 
+%% Preprocessing
+
 DotInd = FindLastDot(File);         % Last dot in filename before extension
 SP = [File(1:DotInd-1) '.mat'];     % For example, '5um.tif' -> '5um'
 IMS = struct();                     % Image structure
@@ -24,6 +26,8 @@ else
 end
 IMS.Gray = G;                       % Store in structure
 
+%% Segmentation
+
 E = edge(G,'canny');                % Apply a Canny edge finder - 1's at the edges, 0's elsewhere
 Gd = double(G);                     % Turn the grey image into double prec.
 Ed = double(E);                     % Turn the edge image into double prec.
@@ -41,11 +45,17 @@ save(SP,'IMS')
 MinLength = 150;                     % Minimum length of skeleton segment to be considered fibrilar (in nm)
 MinArea = 2000;                     % Minimum area of connected component to be considered a fiber (in nm^2)
 
+%% Cleaning and Skeletonizing
+
 YBClean(SP,MinArea);                % Remove 'fibers' whose area is less than 6E-5 * total image area
 Skeletonize(SP);                    % Generate a skeleton image
 Branches(SP);                       % Find branch points
 Segments(SP);                       % Dilate branch points and remove them from skeleton
 OrientHist(SP,MinLength);           % Generate histogram of skeleton pixel orientations
+
+%% Finding Fiber Lengths
+
+% FiberLengths(SP);                   % Generate a structure array describing all of the fibers in the image
 
 % FirstFiberAngles(SP);               % Estimate angles off horizontal of segmented fiber pixels
 % FillAmorphousAngles(SP);            % Interpolate angles between existing fibers
