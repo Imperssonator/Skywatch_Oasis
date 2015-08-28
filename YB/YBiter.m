@@ -19,17 +19,17 @@ Vold = V0;
 iter = 0;
 maxiter = 40;
 
-tic
+% tic
 while iter<maxiter
     iter = iter+1;
-    disp(iter)
+%     disp(iter)
     
     Lap = del2(Vold);
     Vnew = Vold + Vupdate .* (w .* Lap);
     Vold = Vnew;
     
 end
-toc
+% toc
 Vf = Vnew;
 
 end

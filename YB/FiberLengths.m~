@@ -25,13 +25,11 @@ NumEnds = 2*NumSegs;
 EndCell = cell(NumSegs,2);                      % We're going to make a cell array that has the endpoint coordinates stored for each
 % Make an endpoints cell array NumSegs x 2
 for i = 1:NumSegs
-    IsoSeg = SLabel == i;               % IsoSeg = an isolated segment i.e. only white pixels where this segment is
-    SegEnds = IsoSeg.*Ends;           % SegEnds = just the endpoints of this segment
-    EndIndices = find(SegEnds);         % Indices of the end of Segmend i
-    [End1i,End1j] = ind2sub([m n],EndIndices(1));
-    [End2i,End2j] = ind2sub([m n],EndIndices(2));
-    EndCell{i,1} = [End1i,End1j]; EndCell{i,2} = [End2i,End2j];
-    
+    IsoSeg = SLabel == i;                       % IsoSeg = an isolated segment i.e. only white pixels where this segment is
+    SegEnds = IsoSeg.*Ends;                     % SegEnds = just the endpoints of this segment
+    [Endi Endj] = find(SegEnds);                 % Indices of the end of Segmend i
+    EndCell{i,1} = [Endi(1),Endj(1)];
+    EndCell{i,2} = [Endi(2),Endj(2)];
     RP(i).Label = i;
 end
 
@@ -42,20 +40,8 @@ for s = 1:NumSegs
         Sub2End{Coords(1),Coords(2)} = [s ep];
     end
 end
-EndLookup = zeros(NumEnds,2);                   % Given a linear indexed endpoint you can lookup the location in EndLib
-for j = 1:NumSegs
-    for e = 1:2
-    EndLookup((e-1)*NumSegs+j,:) = [j e];
-    end
-end
-EndLib = struct();                              % Where to store endpoint match info, a structure array of structures
 
-%% Finding Segment areas for no reason
-
-Areas = [[RP(:).Area]' [RP(:).Label]']; % Sort segment labels by the area of their segment
-SortedAreas = flip(sortrows(Areas,1),1);
-
-% Now run the algorithm starting from the longest to the shortest segments
+EndLib = struct();                              % Where to store endpoint match info, a structure array
 
 %% Make Search Kernels
 
@@ -63,20 +49,18 @@ SortedAreas = flip(sortrows(Areas,1),1);
 % a segment for other endpoints
 % It is 90 x 200 nm, a horizontal bar
 
-Kh = ceil(SearchLat/pixdim);                   % How far to search laterally (from the sides of the segment)
-Kw = ceil(SearchLong/pixdim);                  % How far to search longitudinally (out in the direction of the segment)
+Kh = ceil(SearchLat/pixdim);                    % How far to search laterally (from the sides of the segment)
+Kw = ceil(SearchLong/pixdim);                   % How far to search longitudinally (out in the direction of the segment)
 
-Kernel = ones(Kh,Kw);                    % The search kernel
-KStart = zeros(Kh,Kw);                   % The point in the search kernel that goes at the segment endpoint
-KStart(floor(Kh/2),1) = 1;
-KStart(floor(Kh/2+1),1) = 1;              % Had to add this in due to pixel loss in rotation
+Kernel = ones(Kh,Kw);                           % The search kernel
+KStart = zeros(Kh,Kw);                          % The point in the search kernel that goes at the segment endpoint
+KStart(floor(Kh/2),3) = 1;
+KStart(floor(Kh/2+1),3) = 1;                    % Had to add this in due to pixel loss in rotation
 
 %% Run The Algo
-
+disp('Running Search...')
 for j = 1:NumSegs %1155:1155
-    disp(j)
-    jlab = SortedAreas(j,2);            % The original label of the current segment we're processing
-    Oj = RP(jlab).Orientation;          % Orientation of the segment we're considering
+    Oj = RP(j).Orientation;                  % Orientation of the segment we're considering
     
     %% Choosing a Search Angle
     % This section of code measures two angles, the "orientation" as
@@ -90,13 +74,14 @@ for j = 1:NumSegs %1155:1155
     % orientation to point in about the same direction as the endpoint
     % vector
     
-    EPs = [EndCell{jlab,1};...                          % The endpoints of the segment
-           EndCell{jlab,2}];
+    EPs = [EndCell{j,1};...                          % The endpoints of the segment
+           EndCell{j,2}];
     for ep = 1:2
         EP = EPs(ep,:);
-        EndLib(jlab,ep).EPCoord = EP;
+        EndLib(j,ep).EPCoord = EP;
         EndIndex = (ep-1)*NumSegs+j;
         EndLib(j,ep).EndIndex = EndIndex;
+        EndLib(j,ep).Label = SLabel(EP(1),EP(2));
         
         if ep==1
             EPVec = EPs(2,:)-EPs(1,:);
@@ -106,21 +91,23 @@ for j = 1:NumSegs %1155:1155
         
         EPVec = EPVec./norm(EPVec);                     % Make it a unit vector
         EPAng = ImVec2RealAng(EPVec);                   % Find the real space angle of that vector
-        % EP ANG BETWEEN -90 and 270!!!  Oj BETWEEN -90 and 90!
+        EndLib(j,ep).EPVec = EPVec;
+        EndLib(j,ep).EPAng = EPAng;
+        % EP ANG BETWEEN 0 and 360!!!  Oj BETWEEN -90 and 90!
         
         AngleDiffs = [AngleDiff(EPAng,Oj), AngleDiff(EPAng,Oj+180);...
                       Oj,                  Oj+180];     % Find which 'version' of the orientation is closer to the endpoint angle
     
         [~, Closest] = min(AngleDiffs(1,:));
         TrueAngle = AngleDiffs(2,Closest);              % The true segment orientation pointing along the segment from the current endpoint
-        TrueOVec = [-sin(TrueAngle) cos(TrueAngle)];    % The true orientation unit vector. -sin to keep it in Image Matrix space (down is positive i)
+        TrueOVec = [-sind(TrueAngle) cosd(TrueAngle)];    % The true orientation unit vector. -sin to keep it in Image Matrix space (down is positive i)
         SearchVec = -TrueOVec;                          % Search vector points in opposite direction
-        SearchAngle = ImVec2RealAng(SearchVec);
+        SearchAngle = ImVec2RealAng(SearchVec);   %ImVec2RealAng(SearchVec);
         
-        EndLib(jlab,ep).TrueOVec = TrueOVec;            % Orientation Vector pointing into segment from this endpoint
-        EndLib(jlab,ep).TrueAngle = TrueAngle;
-        EndLib(jlab,ep).SearchVec = SearchVec;
-        EndLib(jlab,ep).SearchAngle = SearchAngle;
+        EndLib(j,ep).TrueOVec = TrueOVec;            % Orientation Vector pointing into segment from this endpoint
+        EndLib(j,ep).TrueAngle = TrueAngle;
+        EndLib(j,ep).SearchVec = SearchVec;
+        EndLib(j,ep).SearchAngle = SearchAngle;
         
         %% Implementing Search
         
@@ -128,26 +115,26 @@ for j = 1:NumSegs %1155:1155
         RotKStart = imrotate(KStart,SearchAngle);       % Rotate the kernel start point to that angle
         
         EPMatch = KernSearch(Ends,RotKern,RotKStart,EP);
-        EndLib(jlab,ep).MatchSubs = EPMatch;            % This is the matrix of subscript indices of endpoints that match with this endpoint
+        EndLib(j,ep).MatchSubs = EPMatch;            % This is the matrix of subscript indices of endpoints that match with this endpoint
 
         if not(isempty(EPMatch))
-            EndLib(jlab,ep).MatchDists = CalcMatchDists(EndLib(jlab,ep),pixdim);
-            EndLib(jlab,ep).MatchSegs = GetMatchSegs(EndLib(jlab,ep),SLabel);
-            EndLib(jlab,ep).MatchEnds = GetMatchEnds(EPMatch,Sub2End);
+            EndLib(j,ep).MatchDists = CalcMatchDists(EndLib(j,ep),pixdim);
+            EndLib(j,ep).MatchSegs = GetMatchSegs(EndLib(j,ep),SLabel);
+            EndLib(j,ep).MatchEnds = GetMatchEnds(EPMatch,Sub2End);
         else
-            EndLib(jlab,ep).MatchDists = [];
-            EndLib(jlab,ep).MatchSegs = [];
-            EndLib(jlab,ep).MatchEnds = [];
+            EndLib(j,ep).MatchDists = [];
+            EndLib(j,ep).MatchSegs = [];
+            EndLib(j,ep).MatchEnds = [];
         end
     end
 end
 
 %% Ranking Matches
-
+disp('Ranking Results...')
 MatchMatrix = sparse(zeros(NumEnds));                       % EndIndex = (en-1)*NumEnds+j
 
 for j = 1:NumSegs %1155:1155
-    disp(j)
+%     disp(j)
     for en = 1:2
         if not(isempty(EndLib(j,en).MatchEnds))
             OD = CalcODiffs(EndLib,j,en);                   % Difference between the search vector and the true orientation of the match endpoints
@@ -172,20 +159,10 @@ end
 
 MatchMatrix = MatchMatrix.*MatchMatrix'; % This enforces symmetry basically
 
-% for i = 1:NumEnds
-%     [i, Topi] = find(MatchMatrix(i,:));
-%     for j = Topi
-%         if MatchMatrix(j,i)==0
-%             MatchMatrix(i,j)=0;
-%         end
-%     end
-% end
-
 %% Percolation
 % Now we put together the fibers. Identify endpoints that are mutual
 % matches and percolate through them.
-
-save('FLDebug')
+disp('Stitching Fibers...')
 
 DeadEnds = find(sum(MatchMatrix,2)==0);
 
@@ -194,7 +171,6 @@ count = 1;
 SegJump = 1;
 CurrEnd = DeadEnds(1);
 F(count).Fiber = [CurrEnd];
-
 
 % How this is going to work:
 % Start with first dead end
@@ -208,14 +184,20 @@ F(count).Fiber = [CurrEnd];
 % Continue
 
 while not(isempty(DeadEnds))
+%     disp(count)
     if SegJump
-        SisterEnd = FindSister(CurrEnd,EndLib,EndLookup);
+        SisterEnd = FindSister(CurrEnd,NumSegs);
         F(count).Fiber = [F(count).Fiber SisterEnd];
         SisterMatch = FindMatch(SisterEnd,MatchMatrix);
         if isempty(SisterMatch)
             DeadEnds = DeadEnds(2:end);
             DeadEnds(find(DeadEnds==SisterEnd))=[];
+            if isempty(DeadEnds)
+                break
+            end
             count = count+1;
+            F(count).Fiber = DeadEnds(1);
+            CurrEnd = DeadEnds(1);
         else
             SegJump = 0;
         end
@@ -226,38 +208,72 @@ while not(isempty(DeadEnds))
     end
 end
 
-% F = struct();
-% count = 0;
-% IncorpList = [];
+%% Get Fiber Labels
+disp('Labeling Fibers...')
+
+for i = 1:length(F)
+    Fiberi = F(i).Fiber;
+    FirstEnds = Fiberi(1:2:end);
+    FiberSegs = [];
+%     disp(FirstEnds)
+    for e = FirstEnds
+        FiberSegs = [FiberSegs EndLib(e).Label];
+    end
+    F(i).FiberSegs = FiberSegs;
+end
+
+FiberLabels = zeros(m,n);
+
+for i = 1:length(F)
+    FiberSegsi = F(i).FiberSegs;
+    NewFiber = MultiEquiv(SLabel,FiberSegsi).*i;
+    FiberLabels = FiberLabels + NewFiber;
+end
+
+IMS.FiberLabels = FiberLabels;
+
+%% Calculate Fiber Lengths
+disp('Calculating Fiber Lengths...')
+
+for i = 1:length(F)
+    Fiberi = F(i).Fiber;
+    TotalLen = 0;
+    PrevEP = Fiberi(1);
+    for e = Fiberi(2:end)
+        PrevCoord = EndLib(PrevEP).EPCoord;
+        CurrCoord = EndLib(e).EPCoord;
+        TotalLen = TotalLen+norm(CurrCoord-PrevCoord);
+        PrevEP = e;
+    end
+    F(i).Length = TotalLen*pixdim;
+end
 % 
-% for i = 1:NumSegs
-%     disp(i)
-%     if isempty(ismember(IncorpList,i))
-%         [I,Matches] = find(MatchMatrix(i,:));
-%         if isempty(Matches)
-%             count = count+1;
-%             F(count).Fiber = [i];
-%         else
-%             count = count+1;
-%             F(count).Fiber = [];
-%             [F, IncorpList] = FiberPerc(F,IncorpList,MatchMatrix,count,i,0);
-%         end
-%     end
-% end
-    
+% save('FLDebug')
+
+IMS.EndLib = EndLib;
+IMS.Fibers = F;
+IMS.SFib = SFib;
+IMS.SLabel = SLabel;
+
+save(SP,'IMS')
+
 end
 
 %% Sub Functions
 
-function SisterEnd = FindSister(CurrEnd,EndLib,EndLookup)
+function SisterEnd = FindSister(CurrEnd,NumSegs)
 
-ELInd = EndLookup(CurrEnd,:);
-
-if ELInd(2) == 1
-    SisterEndInd = EndLib(ELInd(1),2).EndIndex;
+if CurrEnd > NumSegs
+    SisterEnd = CurrEnd-NumSegs;
 else
-    SisterEndInd = EndLib(ELInd(1),1).EndIndex;
+    SisterEnd = CurrEnd+NumSegs;
 end
+
+end
+
+function SisterMatch = FindMatch(SisterEnd,MatchMatrix)
+
+SisterMatch = find(MatchMatrix(SisterEnd,:));
 
 end
 
@@ -290,7 +306,7 @@ count = 0;
 for e = 1:m
     if Cand(e)
         count = count+1;
-        Score = OD(e)+MD(e);
+        Score = (OD(e)>30).*OD(e)+MD(e);
         Tops(count,:) = [Score MatchEnds(e,:)];
     end
 end
@@ -415,3 +431,5 @@ for i = 1:m
 end
 
 end
+
+

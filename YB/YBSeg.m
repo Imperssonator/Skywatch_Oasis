@@ -35,14 +35,14 @@ V0 = Gd.*Ed;                        % Fill in the grey values of the edge pixels
 IMS.Edge = E;                       
 
 Vf = YBiter(V0);                    % Perform Yanowitz-Bruckstein surface interpolation to create threshold surface from edge gray values
-IMS.ThreshSurf = uint8(Vf);                % Save the threshold surface
+IMS.ThreshSurf = uint8(Vf);         % Save the threshold surface
 
 BW = G>Vf;                          % Segment the image; pixels above threshold surface are white, if not, black
 IMS.BW = BW;
 
 save(SP,'IMS')
 
-MinLength = 150;                     % Minimum length of skeleton segment to be considered fibrilar (in nm)
+MinLength = 150;                    % Minimum length of skeleton segment to be considered fibrilar (in nm)
 MinArea = 2000;                     % Minimum area of connected component to be considered a fiber (in nm^2)
 
 %% Cleaning and Skeletonizing
@@ -55,8 +55,9 @@ OrientHist(SP,MinLength);           % Generate histogram of skeleton pixel orien
 
 %% Finding Fiber Lengths
 
-% FiberLengths(SP);                   % Generate a structure array describing all of the fibers in the image
-
+FiberLengths(SP);                   % Generate a structure array, IMS.F, describing all of the fibers in the image
+FiberPlot(SP);
+LengthHist(SP);
 % FirstFiberAngles(SP);               % Estimate angles off horizontal of segmented fiber pixels
 % FillAmorphousAngles(SP);            % Interpolate angles between existing fibers
 

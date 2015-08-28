@@ -30,24 +30,6 @@ count = 1;
 for i = 1:f
     FiberPix = double(FL==i);
     C = ColorList(count,:);
-    FibR = FiberPix.*C(1);
-    FibG = FiberPix.*C(2);
-    FibB = FiberPix.*C(3);
-    PlotIm(:,:,1) = PlotIm(:,:,1) + FibR;
-    PlotIm(:,:,2) = PlotIm(:,:,2) + FibG;
-    PlotIm(:,:,3) = PlotIm(:,:,3) + FibB;
-    if count == nColors
-        count = 1;
-    else
-        count = count+1;
-    end
-end
-
-PlotIm = uint8(PlotIm);
-
-save('PI','PlotIm')
-
-figure
-imshow(PlotIm)
+    
 
 end

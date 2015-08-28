@@ -16,6 +16,7 @@ Nabil = {};
 
 for i = 1:NumFiles
     File = Files{i,1};
+    disp(File)
     Nabil{i,1} = File;
     Nabil{i,2} = YBSeg(File,5000);
 end
