@@ -5,6 +5,7 @@ function [] = FiberLengths(SP)
 
 SearchLat = 90;
 SearchLong = 200;
+MinLength = 30;         % Any segment less than 30 nm long will be cleaned out
 ODiffTol = 50;
 
 %% Image Characteristics
@@ -14,7 +15,13 @@ S = IMS.Segments;                       % The skeleton segments
 [m,n] = size(S);
 pixdim = w/m;                           % size of a pixel in nm
 pixarea = pixdim^2;
-SFib = bwareaopen(S,4,8);               % Let's not worry about those shorties (<4 pix) for a bit
+MinSegLen = ceil(MinLength/pixdim);
+SFib = bwareaopen(S,MinSegLen,8);               % Let's not worry about those shorties (<30nm) for a bit
+
+% It has come to my attention that some skeletal segments have holes which
+% cause problems. Here we remove those segments.
+
+SFib = RemoveHolyShit(SFib);
 
 %% Building up Utility Variables and Lookup functions
 RP = regionprops(SFib,'Area','Orientation');    % Grab region props for all the segments
@@ -24,6 +31,7 @@ NumSegs = length(RP);
 NumEnds = 2*NumSegs;
 EndCell = cell(NumSegs,2);                      % We're going to make a cell array that has the endpoint coordinates stored for each
 % Make an endpoints cell array NumSegs x 2
+
 for i = 1:NumSegs
     IsoSeg = SLabel == i;                       % IsoSeg = an isolated segment i.e. only white pixels where this segment is
     SegEnds = IsoSeg.*Ends;                     % SegEnds = just the endpoints of this segment
@@ -40,7 +48,6 @@ for s = 1:NumSegs
         Sub2End{Coords(1),Coords(2)} = [s ep];
     end
 end
-
 EndLib = struct();                              % Where to store endpoint match info, a structure array
 
 %% Make Search Kernels
@@ -116,6 +123,7 @@ for j = 1:NumSegs %1155:1155
         
         EPMatch = KernSearch(Ends,RotKern,RotKStart,EP);
         EndLib(j,ep).MatchSubs = EPMatch;            % This is the matrix of subscript indices of endpoints that match with this endpoint
+
 
         if not(isempty(EPMatch))
             EndLib(j,ep).MatchDists = CalcMatchDists(EndLib(j,ep),pixdim);

@@ -4,7 +4,7 @@ count = 1;
 for j = 1:100
     for i = 1:25
         if j == 1
-            XYZ(count,:) = {0 (i-1)*0.38 0 'g' 0};
+            XYZ(count,:) = {0 (i-1)*0.38 0 'g' 0};      % {x, y, z, 'generator or collector', Energy (will be sampled from DOS)}
         elseif j == 100
             XYZ(count,:) = {0 (i-1)*0.38 (j-1)*0.38 'c' 0};
         else

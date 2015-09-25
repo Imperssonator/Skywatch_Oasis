@@ -9,13 +9,14 @@ function SP = YBSeg(File,Dim)
 
 DotInd = FindLastDot(File);         % Last dot in filename before extension
 SP = [File(1:DotInd-1) '.mat'];     % For example, '5um.tif' -> '5um'
+
 IMS = struct();                     % Image structure
 IMS.File = File;                    % Save filename in structure
 IMS.Name = SP;                      % Save image name in structure
 IMS.Dim = Dim;                      % Save image edge size      
 
 IM = imread(File);
-IMG = IM(:,:,1:3);         % Remove any alpha channels from tifs and crop the shit
+IMG = IM(:,:,1:3);                  % Remove any alpha channels from tifs
 IMS.IMG = IMG;                      % save actual image in structure
 imtool(IMG)
 
@@ -51,13 +52,13 @@ YBClean(SP,MinArea);                % Remove 'fibers' whose area is less than 6E
 Skeletonize(SP);                    % Generate a skeleton image
 Branches(SP);                       % Find branch points
 Segments(SP);                       % Dilate branch points and remove them from skeleton
-OrientHist(SP,MinLength);           % Generate histogram of skeleton pixel orientations
+%OrientHist(SP,MinLength);           % Generate histogram of skeleton pixel orientations
 
 %% Finding Fiber Lengths
 
-FiberLengths(SP);                   % Generate a structure array, IMS.F, describing all of the fibers in the image
-FiberPlot(SP);
-LengthHist(SP);
+% FiberLengths(SP);                   % Generate a structure array, IMS.F, describing all of the fibers in the image
+% FiberPlot(SP);
+%LengthHist(SP);
 % FirstFiberAngles(SP);               % Estimate angles off horizontal of segmented fiber pixels
 % FillAmorphousAngles(SP);            % Interpolate angles between existing fibers
 

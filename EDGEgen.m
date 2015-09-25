@@ -14,9 +14,9 @@ for i = 1:m
 %     disp(i-1)
     for j = 1:length(neighbors)
         if neighbors(j)>(i-1)
-            NN(count,1) = i-1;
-            NN(count,2) = neighbors(j);
-            NN(count,3) = 0.1;
+            NN(count,1) = i-1;              % Starting point of edge
+            NN(count,2) = neighbors(j);     % Ending point of edge
+            NN(count,3) = 0.1;              % Transfer integral of edge
             count = count+1;
         end
     end
