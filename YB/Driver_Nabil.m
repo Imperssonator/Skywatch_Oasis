@@ -2,8 +2,8 @@ function Nabil = Driver_Nabil()
 
 %% Driver
 
-FolderName = 'NK Son and Age/48hr 10um';
-DirectoryPath = 'NK Son and Age/48hr 10um/';
+FolderName = 'NK Son and Age/New';
+DirectoryPath = 'NK Son and Age/New/';
 
 D = CompileImgs(DirectoryPath);
 disp(D)
@@ -19,10 +19,10 @@ for i = 1:NumFiles
     File = Files{i,1};
     disp(File)
     Nabil{i,1} = File;
-    Nabil{i,2} = YBSeg(File,10000);
+    Nabil{i,2} = YBSimpleSeg(File,5000);
 end
 
-save('Nabil48hr','Nabil')
+save('NabilNew','Nabil')
 load(File)
 
 end

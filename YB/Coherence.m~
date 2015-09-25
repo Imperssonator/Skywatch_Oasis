@@ -2,7 +2,7 @@ function [Coher, AngMap, JESort, JVSort] = Coherence(G,BW)
 
 [m n] = size(G);
 InitGauss = m/1024*2;
-GradGaussSig = m/1024*6;
+GradGaussSig = m/1024*3;
 Gauss = imgaussfilt(G,InitGauss);
 imtool(Gauss)
 % imtool(Gauss)
@@ -40,10 +40,10 @@ end
 
 Coher = ((JESort(:,:,1)-JESort(:,:,2))./(JESort(:,:,1)+JESort(:,:,2))).^2;
 AngMap = atan2d(-JVSort(:,:,1),JVSort(:,:,2));
+AngMap(1,1) = 270; AngMap(end,end) = -90;          % This is janky
 load('JET')
 AngMapNaN = AngMap;
 AngMapNaN(~BW)=NaN;
-AngMapNaN(1,1) = 270; AngMapNaN(end,end) = -90;          % This is janky
 pcolor(AngMapNaN); shading flat; axis equal; set(gca,'YDir','reverse'); colormap(jet_wrap);
 % 
 % imtool(mat2gray(Coher))
