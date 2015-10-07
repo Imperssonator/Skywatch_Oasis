@@ -2,8 +2,9 @@ function Nabil = Driver_Nabil()
 
 %% Driver
 
-FolderName = 'NK Son and Age/New';
-DirectoryPath = 'NK Son and Age/New/';
+FolderName = 'NK Son and Age';
+DirectoryPath = 'NK Son and Age/';
+ImDim = 5000;
 
 D = CompileImgs(DirectoryPath);
 disp(D)
@@ -12,17 +13,23 @@ Files = D;  %{D(:).path}';
 
 NumFiles = length(Files);
 Nabil = {};
-
+disp('Files:')
+disp(NumFiles)
 % return
 
 for i = 1:NumFiles
+    disp(i)
     File = Files{i,1};
     disp(File)
     Nabil{i,1} = File;
-    Nabil{i,2} = YBSimpleSeg(File,5000);
+    disp('Segmenting...')
+    Nabil{i,2} = YBSimpleSeg(File,ImDim);        % need a way to deal with this 5000
+    disp('Calculating Structure Tensor...')
+    Coherence(Nabil{i,2});
+%     qTensorNils(Nabil{i,2},10);                  % this 10 needs to be calculated from the 5000.. size issues...
 end
 
-save('NabilNew','Nabil')
+save('Nabil','Nabil')
 load(File)
 
 end

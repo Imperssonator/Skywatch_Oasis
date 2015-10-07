@@ -1,5 +1,8 @@
-function [Coher, AngMap, JESort, JVSort] = Coherence(G,BW)
+function [Coher, AngMap, JESort, JVSort] = Coherence(SP)
 
+load(SP)
+G = IMS.Gray;
+BW = IMS.BW;
 [m n] = size(G);
 InitGauss = m/1024*2;
 GradGaussSig = m/1024*6;
@@ -38,14 +41,26 @@ for i = 1:m
     end
 end
 
-Coher = ((JESort(:,:,1)-JESort(:,:,2))./(JESort(:,:,1)+JESort(:,:,2))).^2;
-AngMap = atan2d(-JVSort(:,:,1),JVSort(:,:,2));
+% Coher = ((JESort(:,:,1)-JESort(:,:,2))./(JESort(:,:,1)+JESort(:,:,2))).^2;
+AngMap = atan2d(-JVSort(:,:,1),JVSort(:,:,2));      % last evec is 'coherence orientation'
 load('JET')
 AngMapNaN = AngMap;
 AngMapNaN(~BW)=NaN;
-AngMapNaN(1,1) = 270; AngMapNaN(end,end) = -90;          % This is janky
-pcolor(AngMapNaN); shading flat; axis equal; set(gca,'YDir','reverse'); colormap(jet_wrap);
+AngMapNaN(1,1) = 180; AngMapNaN(end,end) = -180;          % This is janky
+AngMap(1,1) = 180; AngMap(end,end) = -180;          % This is janky
+% figure
+% pcolor(AngMapNaN); shading flat; axis equal; set(gca,'YDir','reverse'); colormap(jet_wrap);
 % 
 % imtool(mat2gray(Coher))
+
+IMS.AngMap = AngMap;
+IMS.AngMapNaN = AngMapNaN;
+IMS.Gauss = Gauss;
+IMS.J = J;
+IMS.JFilt = JFilt;
+IMS.JESort = JESort;
+IMS.JVSort = JVSort;
+
+save(SP,'IMS')
 
 end

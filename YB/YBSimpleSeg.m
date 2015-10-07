@@ -18,7 +18,7 @@ IMS.Dim = Dim;                      % Save image edge size
 IM = imread(File);
 IMG = IM(:,:,1:3);         % Remove any alpha channels from tifs and crop the shit
 IMS.IMG = IMG;                      % save actual image in structure
-imtool(IMG)
+% imtool(IMG)
 
 if ndims(IM)>2
     G = rgb2gray(IMG);              % If it's still color, make it grey
