@@ -16,7 +16,11 @@ IMS.Name = SP;                      % Save image name in structure
 IMS.Dim = Dim;                      % Save image edge size      
 
 IM = imread(File);
-IMG = IM(:,:,1:3);                  % Remove any alpha channels from tifs
+if ndims(IM)>2
+    IMG = IM(:,:,1:3);              % Remove any alpha channels from tifs
+else
+    IMG = IM;
+end
 IMS.IMG = IMG;                      % save actual image in structure
 imtool(IMG)
 
@@ -48,10 +52,10 @@ MinArea = 2000;                     % Minimum area of connected component to be 
 
 %% Cleaning and Skeletonizing
 
-YBClean(SP,MinArea);                % Remove 'fibers' whose area is less than 6E-5 * total image area
-Skeletonize(SP);                    % Generate a skeleton image
-Branches(SP);                       % Find branch points
-Segments(SP);                       % Dilate branch points and remove them from skeleton
+% YBClean(SP,MinArea);                % Remove 'fibers' whose area is less than 6E-5 * total image area
+% Skeletonize(SP);                    % Generate a skeleton image
+% Branches(SP);                       % Find branch points
+% Segments(SP);                       % Dilate branch points and remove them from skeleton
 %OrientHist(SP,MinLength);           % Generate histogram of skeleton pixel orientations
 
 %% Finding Fiber Lengths
