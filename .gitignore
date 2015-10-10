@@ -1,9 +1,16 @@
-*.mat
-*.tif
 *.png
-*.fig
-*.jpeg
+*.tif
+*.mat
 *.jpg
+*.zip
+*.pdf
+*.xlsx
+*.tiff
+*.ppt
+*.doc
+*.docx
+*.flat
+*.txt
 
 # Tofet Files
 *.xyz
